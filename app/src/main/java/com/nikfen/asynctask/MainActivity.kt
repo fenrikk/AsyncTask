@@ -1,18 +1,16 @@
 package com.nikfen.asynctask
 
 import android.os.Bundle
+import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.lifecycleScope
+import androidx.recyclerview.widget.LinearLayoutManager
 import com.nikfen.asynctask.databinding.ActivityMainBinding
-import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
-import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
-import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -24,35 +22,43 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val binding = ActivityMainBinding.inflate(layoutInflater)
-        setContentView(binding.textView.rootView)
+        setContentView(binding.root)
 
-        val listLiveData = mutableListOf<Int>();
-        thread = Thread {
-            while (!Thread.currentThread().isInterrupted) {
-                Thread.sleep(1000)
-                liveData.postValue(Random.nextInt(0, 100))
-            }
-        }
-        thread!!.start()
-        liveData.observe(this) {
-            listLiveData.add(it)
-            binding.textView.text = "Livedata ${listLiveData.last()}"
-        }
+        val linearLayoutManager = LinearLayoutManager(this)
+        val adapter = StringAdapter()
+        binding.recycleView.layoutManager = linearLayoutManager
+        val listInt = mutableListOf<Int>();
 
-        compositeDisposable.add(Observable
-            .interval(1000L, TimeUnit.MILLISECONDS)
-            .map {
-                Random.nextInt(0, 100)
-            }
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe({
-                binding.textView2.text = "RxJava $it"
-            }, {
-                it.printStackTrace()
-            })
-        )
+//        thread = Thread {
+//            while (!Thread.currentThread().isInterrupted) {
+//                Thread.sleep(1000)
+//                liveData.postValue(Random.nextInt(0, 100))
+//            }
+//        }
+//        thread!!.start()
+//        liveData.observe(this) {
+//            listInt.add(it)
+//            adapter.submitList(listInt)
+//            binding.recycleView.adapter = adapter
+//        }
 
+//        compositeDisposable.add(
+//            Observable
+//                .interval(1000L, TimeUnit.MILLISECONDS)
+//                .map {
+//                    Random.nextInt(0, 100)
+//                }
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe({
+//                    listInt.add(it)
+//                    adapter.submitList(listInt)
+//                    binding.recycleView.adapter = adapter
+//                }, {
+//                    it.printStackTrace()
+//                })
+//        )
+//
         val flow = MutableStateFlow(0)
         lifecycleScope.launch {
             while (true) {
@@ -60,7 +66,10 @@ class MainActivity : AppCompatActivity() {
                 launch {
                     flow.value = (Random.nextInt(0, 100))
                     flow.collect {
-                        binding.textView3.text = "Coroutines $it"
+                        listInt.add(it)
+                        Log.d("app", "onCreate: $listInt")
+                        adapter.submitList(listInt)
+                        binding.recycleView.adapter = adapter
                     }
                 }
             }
