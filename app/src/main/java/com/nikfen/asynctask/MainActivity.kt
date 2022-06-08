@@ -3,17 +3,20 @@ package com.nikfen.asynctask
 import android.os.Bundle
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nikfen.asynctask.databinding.ActivityMainBinding
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
 
     private var thread: Thread? = null
     private val compositeDisposable = CompositeDisposable()
-    private val listInt = mutableListOf<Int>()
+    private var listInt = listOf<Int>()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -25,20 +28,19 @@ class MainActivity : AppCompatActivity() {
         binding.recycleView.layoutManager = linearLayoutManager
         binding.recycleView.adapter = adapter
 
-        val liveData = MutableLiveData<List<Int>>()
-        thread = Thread {
-            while (!Thread.currentThread().isInterrupted) {
-                Thread.sleep(1000)
-                listInt.add(Random.nextInt(0, 100))
-                liveData.postValue(listInt)
-            }
-        }
-        thread?.start()
-        liveData.observe(this) {
-            Log.d("app", "onCreate: $it")
-            adapter.submitList(it)
-        }
-
+//        val liveData = MutableLiveData<List<Int>>()
+//        thread = Thread {
+//            while (!Thread.currentThread().isInterrupted) {
+//                Thread.sleep(1000)
+//                listInt = listInt + Random.nextInt(0, 100)
+//                liveData.postValue(listInt)
+//            }
+//        }
+//        thread?.start()
+//        liveData.observe(this) {
+//            adapter.submitList(it)
+//        }
+//
 //        compositeDisposable.add(
 //            Observable
 //                .interval(1000L, TimeUnit.MILLISECONDS)
@@ -48,29 +50,29 @@ class MainActivity : AppCompatActivity() {
 //                .subscribeOn(Schedulers.io())
 //                .observeOn(AndroidSchedulers.mainThread())
 //                .subscribe({
-//                    listInt.add(it)
+//                    listInt = listInt + Random.nextInt(0, 100)
 //                    adapter.submitList(listInt)
-//                    binding.recycleView.adapter = adapter
 //                }, {
 //                    it.printStackTrace()
 //                })
 //        )
 //
-//        val flow = MutableStateFlow(0)
-//        lifecycleScope.launch {
-//            while (true) {
-//                delay(1000)
-//                launch {
-//                    flow.value = (Random.nextInt(0, 100))
-//                    flow.collect {
-//                        listInt.add(it)
-//                        Log.d("app", "onCreate: $listInt")
-//                        adapter.submitList(listInt)
-//                        binding.recycleView.adapter = adapter
-//                    }
-//                }
-//            }
-//        }
+        val flow = MutableStateFlow(0)
+        lifecycleScope.launch {
+            launch {
+                while (true) {
+                    delay(1000)
+                    flow.value = (Random.nextInt(0, 100))
+                }
+            }
+            launch {
+                flow.collect {
+                    listInt = listInt + Random.nextInt(0, 100)
+                    Log.d("app", "onCreate: $listInt")
+                    adapter.submitList(listInt)
+                }
+            }
+        }
     }
 
     override fun onDestroy() {
