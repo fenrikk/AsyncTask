@@ -6,10 +6,14 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nikfen.asynctask.databinding.ActivityMainBinding
+import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
+import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
+import io.reactivex.rxjava3.schedulers.Schedulers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
 class MainActivity : AppCompatActivity() {
@@ -41,36 +45,34 @@ class MainActivity : AppCompatActivity() {
 //            adapter.submitList(it)
 //        }
 //
-//        compositeDisposable.add(
-//            Observable
-//                .interval(1000L, TimeUnit.MILLISECONDS)
-//                .map {
-//                    Random.nextInt(0, 100)
-//                }
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe({
-//                    listInt = listInt + Random.nextInt(0, 100)
-//                    adapter.submitList(listInt)
-//                }, {
-//                    it.printStackTrace()
-//                })
-//        )
-//
+        compositeDisposable.add(
+            Observable
+                .interval(1000L, TimeUnit.MILLISECONDS)
+                .map {
+                    Random.nextInt(0, 100)
+                }
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe({
+                    listInt = listInt + Random.nextInt(0, 100)
+                    adapter.submitList(listInt)
+                }, {
+                    it.printStackTrace()
+                })
+        )
+
         val flow = MutableStateFlow(0)
         lifecycleScope.launch {
-            launch {
-                while (true) {
-                    delay(1000)
-                    flow.value = (Random.nextInt(0, 100))
-                }
+            while (true) {
+                flow.value = (Random.nextInt(0, 100))
+                delay(1000)
             }
-            launch {
-                flow.collect {
-                    listInt = listInt + Random.nextInt(0, 100)
-                    Log.d("app", "onCreate: $listInt")
-                    adapter.submitList(listInt)
-                }
+        }
+        lifecycleScope.launch {
+            flow.collect {
+                listInt = listInt + Random.nextInt(0, 100)
+                Log.d("app", "onCreate: $listInt")
+                adapter.submitList(listInt)
             }
         }
     }
