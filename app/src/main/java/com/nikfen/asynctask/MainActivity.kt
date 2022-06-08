@@ -1,18 +1,13 @@
 package com.nikfen.asynctask
 
 import android.os.Bundle
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.lifecycleScope
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.nikfen.asynctask.databinding.ActivityMainBinding
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers
 import io.reactivex.rxjava3.core.Observable
 import io.reactivex.rxjava3.disposables.CompositeDisposable
 import io.reactivex.rxjava3.schedulers.Schedulers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.random.Random
 
@@ -54,27 +49,27 @@ class MainActivity : AppCompatActivity() {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe({
-                    listInt = listInt + Random.nextInt(0, 100)
+                    listInt = listInt + it
                     adapter.submitList(listInt)
                 }, {
                     it.printStackTrace()
                 })
         )
 
-        val flow = MutableStateFlow(0)
-        lifecycleScope.launch {
-            while (true) {
-                flow.value = (Random.nextInt(0, 100))
-                delay(1000)
-            }
-        }
-        lifecycleScope.launch {
-            flow.collect {
-                listInt = listInt + Random.nextInt(0, 100)
-                Log.d("app", "onCreate: $listInt")
-                adapter.submitList(listInt)
-            }
-        }
+//        val flow = MutableStateFlow(0)
+//        lifecycleScope.launch {
+//            while (true) {
+//                flow.value = (Random.nextInt(0, 100))
+//                delay(1000)
+//            }
+//        }
+//        lifecycleScope.launch {
+//            flow.collect {
+//                listInt = listInt + it
+//                Log.d("app", "onCreate: $listInt")
+//                adapter.submitList(listInt)
+//            }
+//        }
     }
 
     override fun onDestroy() {
